@@ -1,0 +1,25 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.pyd
+src/__pycache__/
+src/__init__.py
+
+# ===== Virtual env =====
+.venv/
+
+# ===== Data / Outputs =====
+data/processed/
+data/raw/
+outputs/
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.vscode/
+.idea/
