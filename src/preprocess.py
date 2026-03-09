@@ -1,17 +1,15 @@
-# src/preprocess.py
+"""
+Statcast 데이터 전처리
+
+컬럼 선택, 타입 변환, 파생 변수(description_group, events_group 등) 생성.
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 
 
-@dataclass(frozen=True)
-class PreprocessConfig:
-    season: int = 2025
-
-
-# 컬럼
+# Statcast 원본에서 사용할 컬럼 (나머지는 제거)
 SELECTED_COLS = [
     'pitch_type', 'game_date', 'release_speed', 'release_pos_x', 'release_pos_z',
     'batter', 'pitcher', 'events', 'description', 'zone', 'stand', 'p_throws',
@@ -22,6 +20,7 @@ SELECTED_COLS = [
 ]
 
 
+# description(투구 결과 설명) → 단순화된 그룹
 DESC_TO_GROUP = {
     "called_strike": "strike",
     "swinging_strike": "strike",
@@ -39,6 +38,7 @@ DESC_TO_GROUP = {
     "hit_into_play_no_out": "inplay",
 }
 
+# events(경기 결과) → 단순화된 그룹
 EVENT_TO_GROUP = {
     "single": "hit",
     "double": "hit",
@@ -57,6 +57,7 @@ EVENT_TO_GROUP = {
 }
 
 
+# UMAP·분석용 수치형 컬럼
 NUM_COLS = [
     "release_speed","release_spin_rate","pfx_x","pfx_z",
     "release_pos_x","release_pos_z","release_extension","arm_angle",
@@ -65,6 +66,20 @@ NUM_COLS = [
 
 
 def preprocess_statcast(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Statcast 원시 데이터 전처리
+
+    - SELECTED_COLS 컬럼만 선택
+    - 타입 변환 (날짜, 숫자, 범주)
+    - description_group, events_group 파생 변수 생성
+    - base_state, count 파생 변수 생성
+
+    Args:
+        df_raw: pybaseball statcast 원본 DataFrame
+
+    Returns:
+        전처리된 DataFrame (pitch_clean)
+    """
     # 컬럼 선택
     missing = [c for c in SELECTED_COLS if c not in df_raw.columns]
     if missing:

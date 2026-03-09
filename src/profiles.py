@@ -1,16 +1,16 @@
-# src/profiles.py
+"""
+투수·타자 프로필 생성
+
+- 투수: 클러스터(did_cluster=1) 또는 pitch_type(did_cluster=0) 기반 mix/feature
+- 타자: launch_speed/angle 평균, stand, events/description 분포
+"""
 from __future__ import annotations
 
-from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
 
-@dataclass(frozen=True)
-class ProfilesConfig:
-    topk_clusters_in_pair_profile: int = 8  # pitcher profile에서 상위 cluster 비중은 summary에서만 써도 됨
-
-
+# 투수 프로필용 피처
 PITCH_FEATURES = [
     "release_speed", "release_spin_rate", "pfx_x", "pfx_z",
     "release_pos_x", "release_pos_z", "release_extension", "arm_angle"
@@ -19,8 +19,14 @@ PITCH_FEATURES = [
 
 def build_pitcher_profiles(dfp: pd.DataFrame, summary: pd.DataFrame) -> pd.DataFrame:
     """
-    dfp: pitch_umap_cluster (행=투구)
-    summary: pitcher_cluster_summary (투수 요약, did_cluster 포함)
+    투수 프로필 생성
+
+    - did_cluster=1 투수: 클러스터 mix + 가중 평균 피처
+    - did_cluster=0 투수: pitch_type mix + 가중 평균 피처 (fallback)
+
+    Args:
+        dfp: pitch_umap_cluster (행=투구)
+        summary: pitcher_cluster_summary (did_cluster 포함)
     """
     required = ["pitcher", "pitch_type", "pitch_cluster_id", "pitch_cluster_local"]
     missing = [c for c in required if c not in dfp.columns]
@@ -128,10 +134,11 @@ def build_pitcher_profiles(dfp: pd.DataFrame, summary: pd.DataFrame) -> pd.DataF
 
 def build_batter_profiles(dfp: pd.DataFrame) -> pd.DataFrame:
     """
-    간단/실용 batter profile:
-      - avg launch_speed/angle
-      - stand 최빈값
-      - events_group/description_group 분포(있으면)
+    타자 프로필 생성
+
+    - launch_speed, launch_angle 평균
+    - stand(타석) 최빈값
+    - events_group, description_group 분포 비율
     """
     required = ["batter"]
     missing = [c for c in required if c not in dfp.columns]

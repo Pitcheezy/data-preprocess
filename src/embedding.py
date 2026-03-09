@@ -1,4 +1,9 @@
-# src/embedding.py
+"""
+투수별 UMAP 임베딩 및 HDBSCAN 클러스터링
+
+투수별로 구속, 스핀, 무브먼트 등 피처를 UMAP으로 차원 축소한 뒤
+HDBSCAN으로 구종 유사 클러스터를 생성합니다.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -10,6 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 
+# UMAP 입력 피처 (투구 특성)
 PITCH_FEATURES_FOR_UMAP = [
     "release_speed",
     "release_spin_rate",
@@ -24,7 +30,8 @@ PITCH_FEATURES_FOR_UMAP = [
 
 @dataclass(frozen=True)
 class EmbeddingConfig:
-    # 전 투수 포함 정책
+    """UMAP/HDBSCAN 파라미터"""
+    # 최소 투구 수 (이하면 UMAP/클러스터링 스킵)
     min_pitches_for_umap: int = 40
     min_pitches_for_cluster: int = 120
 
@@ -56,10 +63,15 @@ def _adaptive_hdbscan_params(n: int, cfg: EmbeddingConfig):
 
 def run_pitcher_umap_cluster(df: pd.DataFrame, cfg: EmbeddingConfig) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    입력: pitch_clean (행=투구)
-    출력:
-      - df_out: 투구별 umap/cluster 포함
-      - summary: 투수별 요약
+    투수별 UMAP + HDBSCAN 클러스터링 수행
+
+    Args:
+        df: pitch_clean (행=투구)
+        cfg: EmbeddingConfig
+
+    Returns:
+        df_out: 투구별 umap_x, umap_y, pitch_cluster_local, pitch_cluster_id 추가
+        summary: 투수별 요약 (n_pitches, did_umap, did_cluster, n_clusters 등)
     """
     # 필요한 컬럼 체크
     need = ["pitcher"] + PITCH_FEATURES_FOR_UMAP

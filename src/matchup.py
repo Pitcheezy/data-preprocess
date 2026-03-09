@@ -1,4 +1,9 @@
-# src/matchup.py
+"""
+투수-타자 매치업 테이블 생성
+
+- pitch_level: 투구 단위 (pitcher/batter 프로필 조인)
+- pair_level: (pitcher, batter) 쌍 단위 집계 + 상위 K 클러스터 요약
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,7 +13,8 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class MatchupConfig:
-    topk: int = 5
+    """매치업 설정"""
+    topk: int = 5  # pair_level에서 상위 K개 클러스터만 요약
 
 
 def _ensure_labels(dfp: pd.DataFrame) -> pd.DataFrame:
@@ -64,10 +70,12 @@ def build_matchup_tables(
     cfg: MatchupConfig
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    반환:
-      - pitch_level (행=투구)
-      - pair_level_final (행=(pitcher,batter))
-      - pair_cluster_level (행=(pitcher,batter,cluster)) : 시각화/분석용
+    매치업 테이블 3종 생성
+
+    Returns:
+        pitch_level: 투구 단위 (투수/타자 프로필 조인)
+        pair_level_final: (pitcher, batter) 쌍 단위 + 상위 K 클러스터 요약
+        pair_cluster_level: (pitcher, batter, cluster) 단위 (시각화/분석용)
     """
     dfp = _ensure_labels(dfp)
 
